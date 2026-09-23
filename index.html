@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FAUJI FACTORY | Official Portal</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<style>
+  :root {
+    --primary: #dc2626; /* Red */
+    --primary-dark: #b91c1c;
+    --primary-gradient: linear-gradient(135deg, #000000 0%, #dc2626 100%);
+    --bg: #09090b; /* Deep Black */
+    --card: #18181b; /* Charcoal Card */
+    --text: #f4f4f5; /* Pure White */
+    --muted: #a1a1aa;
+    --border: #27272a;
+    --danger: #ef4444;
+    --success: #22c55e;
+    --radius: 12px;
+    --shadow-lg: 0 10px 25px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+  body { background-color: var(--bg); color: var(--text); padding-bottom: 50px; -webkit-font-smoothing: antialiased; }
+
+  /* Header */
+  header {
+    background: #000000;
+    color: #ffffff;
+    border-bottom: 2px solid var(--primary);
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .app-branding { display: flex; align-items: center; gap: 0.75rem; }
+  .app-logo-badge {
+    background: var(--primary);
+    color: #ffffff;
+    font-weight: 900;
+    font-size: 1.1rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    letter-spacing: 1px;
+  }
+  .app-title { font-size: 1.25rem; font-weight: 900; letter-spacing: 0.5px; color: #ffffff; }
+  .app-sub { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  
+  .user-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: #18181b;
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.82rem;
+  }
+  .logout-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.3rem 0.7rem;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.72rem;
+    cursor: pointer;
+  }
+
+  /* Modals */
+  #auth-modal, #admin-mgmt-modal {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+  }
+  .auth-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 92%;
+    max-width: 440px;
+    padding: 2rem;
+    box-shadow: var(--shadow-lg);
+  }
+  .auth-card h2 { color: #ffffff; margin-bottom: 0.3rem; font-size: 1.4rem; font-weight: 900; }
+  .auth-tabs { display: flex; background: #000000; border-radius: 8px; padding: 4px; margin: 1.2rem 0; border: 1px solid var(--border); }
+  .auth-tab-btn {
+    flex: 1;
+    padding: 0.55rem;
+    border: none;
+    background: none;
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .auth-tab-btn.active { background: var(--primary); color: white; }
+
+  /* Container */
+  .container { max-width: 900px; margin: 1.5rem auto; padding: 0 1rem; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    margin-bottom: 1.25rem;
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Form Elements */
+  label { font-size: 0.75rem; font-weight: 700; color: var(--muted); display: block; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  input, select {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.92rem;
+    outline: none;
+    background: #000000;
+    color: #ffffff;
+    margin-bottom: 1rem;
+  }
+  input:focus, select:focus { border-color: var(--primary); }
+
+  .btn-submit {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.15s;
+  }
+  .btn-submit:hover { background: var(--primary-dark); }
+
+  .badge { display: inline-flex; align-items: center; padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
+  .badge-pending { background: #78350f; color: #fde68a; }
+  .badge-approved { background: #14532d; color: #bbf7d0; }
+  .badge-blocked { background: #7f1d1d; color: #fecaca; }
+
+  /* Tables */
+  .table-responsive { overflow-x: auto; margin-top: 1rem; border-radius: 8px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; background: #000000; }
+  th, td { padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: #121214; color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  tr:hover td { background: #18181b; }
+
+  .btn-action { padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; border: none; margin-right: 4px; }
+  .btn-approve { background: #15803d; color: white; }
+  .btn-block { background: #b91c1c; color: white; }
+</style>
+</head>
+<body>
+
+<!-- AUTHENTICATION / REGISTRATION MODAL -->
+<div id="auth-modal">
+  <div class="auth-card">
+    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem;">
+      <div class="app-logo-badge">FF</div>
+      <h2>FAUJI FACTORY</h2>
+    </div>
+    <p style="font-size: 0.82rem; color: var(--muted);">Restricted Secure Access Portal</p>
+    
+    <div class="auth-tabs">
+      <button class="auth-tab-btn active" onclick="switchAuthTab('login')">Existing Login</button>
+      <button class="auth-tab-btn" onclick="switchAuthTab('register')">First-Time Registration</button>
+    </div>
+
+    <!-- Login View -->
+    <div id="auth-login-view">
+      <label>Registered Mobile Number or Password</label>
+      <input type="password" id="login-cred" placeholder="Enter your entry password">
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+        <input type="checkbox" id="remember-me" style="width: auto; margin: 0;">
+        <label for="remember-me" style="margin: 0; font-size: 0.8rem; cursor: pointer; color: #ffffff;">Remember credentials on this device</label>
+      </div>
+      <button class="btn-submit" onclick="handleLogin()">Access Portal</button>
+      <p style="font-size: 0.74rem; color: var(--muted); margin-top: 0.8rem; text-align: center;">Super Admin enters using Master PIN: <b>1234</b></p>
+    </div>
+
+    <!-- First-Time Registration View -->
+    <div id="auth-register-view" style="display: none;">
+      <label>Full Name</label>
+      <input type="text" id="reg-name" placeholder="Enter full name">
+
+      <label>Designation</label>
+      <select id="reg-designation">
+        <option value="Official">Official</option>
+        <option value="Faculty">Faculty</option>
+        <option value="Student">Student</option>
+      </select>
+
+      <label>Mobile Number (Primary ID)</label>
+      <input type="tel" id="reg-phone" placeholder="10-digit mobile number">
+
+      <label>Date of Birth (DOB)</label>
+      <input type="date" id="reg-dob">
+
+      <button class="btn-submit" onclick="handleRegistrationRequest()" style="background: #18181b; border: 1px solid var(--primary);">Submit Registration Request</button>
+      <p style="font-size: 0.74rem; color: var(--muted); margin-top: 0.8rem; text-align: center;">A password notification will be transmitted to the Super Admin upon submission.</p>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="app-branding">
+    <div class="app-logo-badge">FF</div>
+    <div>
+      <div class="app-title">FAUJI FACTORY</div>
+      <div class="app-sub">Secure Command Portal</div>
+    </div>
+  </div>
+  <div class="user-badge" id="user-display-badge">
+    <span>🔒 Authenticating...</span>
+    <button class="logout-btn" onclick="handleLogout()">Logout</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- PENDING / WAITING SCREEN (Shown before Super Admin approval) -->
+  <div id="screen-waiting" class="card" style="text-align: center; padding: 3rem 1.5rem; display: none;">
+    <h1 style="font-size: 1.8rem; color: #ffffff; margin-bottom: 0.5rem;">WELCOME TO FAUJI FACTORY</h1>
+    <div style="background: #000000; border: 1px solid var(--primary); border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem; display: inline-block; max-width: 500px; width: 100%;">
+      <p style="font-size: 1.05rem; font-weight: 700; color: #fde68a; line-height: 1.5;">
+        ⏳ WAIT WHILE THE SUPER ADMIN SETTLE YOUR SCORE AND ACCESS.
+      </p>
+      <p style="font-size: 0.82rem; color: var(--muted); margin-top: 0.75rem;">
+        An authentication request has been transmitted to the Super Admin. Once reviewed, your permanent entry password will be activated.
+      </p>
+    </div>
+  </div>
+
+  <!-- APPROVED MAIN DASHBOARD (Visible after clearance) -->
+  <div id="screen-dashboard" class="card" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h2 style="font-size: 1.5rem; color: #ffffff;">Command Dashboard</h2>
+        <p style="font-size: 0.85rem; color: var(--muted);">Access Level: <span id="dash-access-level" style="color: var(--primary); font-weight: 700;">Standard</span></p>
+      </div>
+      <div id="super-admin-controls" style="display: none;">
+        <button class="btn-submit" style="width: auto; padding: 0.5rem 1rem; background: var(--primary);" onclick="openSuperAdminPanel()">⚙️ Manage User Access & Requests</button>
+      </div>
+    </div>
+    <div style="background: #000000; border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem;">
+      <h3 style="color: #ffffff; margin-bottom: 0.5rem;">Operational Status: Active</h3>
+      <p style="font-size: 0.9rem; color: var(--muted); line-height: 1.6;">
+        Welcome to the Fauji Factory secure terminal. All protocols are synchronized with the central cloud database.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<!-- SUPER ADMIN USER MANAGEMENT PANEL MODAL -->
+<div id="admin-mgmt-modal" style="display: none;">
+  <div class="auth-card" style="max-width: 800px; width: 95%;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h2 style="color: #ffffff;">Super Admin: User Access Management</h2>
+      <button class="logout-btn" onclick="closeSuperAdminPanel()">✕ Close</button>
+    </div>
+    <p style="font-size: 0.82rem; color: var(--muted); margin-bottom: 1rem;">Review registration requests, assign access permissions, or revoke user privileges instantly.</p>
+    
+    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Designation</th>
+            <th>Mobile / ID</th>
+            <th>DOB</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="admin-users-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- FIREBASE SETUP ---
+const firebaseConfig = {
+  apiKey: "AIzaSyD8-XRYgu51zF0mHOfSZ7M3boOVKJ9KIM4",
+  authDomain: "classroom-ca026.firebaseapp.com",
+  databaseURL: "https://classroom-ca026-default-rtdb.firebaseio.com",
+  projectId: "classroom-ca026",
+  storageBucket: "classroom-ca026.firebasestorage.app",
+  messagingSenderId: "835920397563",
+  appId: "1:835920397563:web:7079d60ee22f4361869c5e"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// State
+let usersList = [];
+let currentUser = null;
+
+// Realtime sync of users database
+db.ref('fauji_users').on('value', snapshot => {
+  const data = snapshot.val();
+  usersList = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
+  
+  // If user is logged in, update local session status live
+  if (currentUser && currentUser.role !== 'SuperAdmin') {
+    const latest = usersList.find(u => u.id === currentUser.id);
+    if (latest) {
+      currentUser = latest;
+      evaluateUserAccessState();
+    }
+  }
+  renderSuperAdminTable();
+});
+
+// Check Local Storage on load for "Remember Me"
+window.addEventListener('DOMContentLoaded', () => {
+  const savedCred = localStorage.getItem('ff_saved_credential');
+  if (savedCred) {
+    document.getElementById('login-cred').value = savedCred;
+    document.getElementById('remember-me').checked = true;
+    handleLogin();
+  }
+});
+
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  if (tab === 'login') {
+    document.getElementById('auth-login-view').style.display = 'block';
+    document.getElementById('auth-register-view').style.display = 'none';
+  } else {
+    document.getElementById('auth-login-view').style.display = 'none';
+    document.getElementById('auth-register-view').style.display = 'block';
+  }
+}
+
+// Handle Login (Supports Super Admin "1234" and registered users)
+function handleLogin() {
+  const cred = document.getElementById('login-cred').value.trim();
+  const remember = document.getElementById('remember-me').checked;
+  if (!cred) { alert('Please enter your access password or phone number.'); return; }
+
+  // 1. Check Super Admin Master PIN
+  if (cred === '1234') {
+    currentUser = { name: 'Super Admin', designation: 'SuperAdmin', phone: '1234', status: 'Approved', role: 'SuperAdmin' };
+    finalizeLogin(remember, cred);
+    return;
+  }
+
+  // 2. Check Registered Users in Firebase
+  const foundUser = usersList.find(u => u.phone === cred || u.password === cred);
+  if (foundUser) {
+    if (foundUser.status === 'Blocked') {
+      alert('Access Denied: Your account has been suspended by the Super Admin.');
+      return;
+    }
+    currentUser = foundUser;
+    finalizeLogin(remember, cred);
+  } else {
+    alert('Invalid credential or awaiting Super Admin approval.');
+  }
+}
+
+function finalizeLogin(remember, cred) {
+  if (remember) {
+    localStorage.setItem('ff_saved_credential', cred);
+  } else {
+    localStorage.removeItem('ff_saved_credential');
+  }
+
+  document.getElementById('auth-modal').style.display = 'none';
+  evaluateUserAccessState();
+}
+
+function evaluateUserAccessState() {
+  const badge = document.getElementById('user-display-badge');
+  const waitingScreen = document.getElementById('screen-waiting');
+  const dashScreen = document.getElementById('screen-dashboard');
+  const adminControls = document.getElementById('super-admin-controls');
+
+  if (currentUser.role === 'SuperAdmin') {
+    badge.innerHTML = `👤 <b>Super Admin</b> <button class="logout-btn" onclick="handleLogout()">Logout</button>`;
+    waitingScreen.style.display = 'none';
+    dashScreen.style.display = 'block';
+    adminControls.style.display = 'block';
+    document.getElementById('dash-access-level').textContent = 'Full Super Admin Control';
+  } else if (currentUser.status === 'Approved') {
+    badge.innerHTML = `👤 <b>${currentUser.name} (${currentUser.designation})</b> <button class="logout-btn" onclick="handleLogout()">Logout</button>`;
+    waitingScreen.style.display = 'none';
+    dashScreen.style.display = 'block';
+    adminControls.style.display = 'none';
+    document.getElementById('dash-access-level').textContent = currentUser.designation;
+  } else {
+    // Pending approval state
+    badge.innerHTML = `👤 <b>${currentUser.name} (Pending)</b> <button class="logout-btn" onclick="handleLogout()">Logout</button>`;
+    waitingScreen.style.display = 'block';
+    dashScreen.style.display = 'none';
+    adminControls.style.display = 'none';
+  }
+}
+
+// First-Time Registration Request
+function handleRegistrationRequest() {
+  const name = document.getElementById('reg-name').value.trim();
+  const designation = document.getElementById('reg-designation').value;
+  const phone = document.getElementById('reg-phone').value.trim();
+  const dob = document.getElementById('reg-dob').value;
+
+  if (!name || !phone || !dob) { alert('Please fill in all required registration fields.'); return; }
+
+  // Check if phone already exists
+  if (usersList.some(u => u.phone === phone)) {
+    alert('An account with this mobile number already exists.');
+    return;
+  }
+
+  // Generate a secure auto-password for the user
+  const generatedPassword = 'FF-' + Math.floor(1000 + Math.random() * 9000);
+
+  const newUserData = {
+    name: name,
+    designation: designation,
+    phone: phone,
+    dob: dob,
+    password: generatedPassword,
+    status: 'Pending',
+    dateRegistered: new Date().toISOString().split('T')[0]
+  };
+
+  db.ref('fauji_users').push(newUserData).then(() => {
+    // Simulate notification transmission to Super Admin
+    alert(`Registration request submitted successfully!\n\n[Super Admin Notification Sent]: User ${name} (${designation}) requested entry. Temporary Password generated: ${generatedPassword}`);
+    
+    // Auto-login user into waiting screen state
+    currentUser = newUserData;
+    document.getElementById('auth-modal').style.display = 'none';
+    evaluateUserAccessState();
+  });
+}
+
+function handleLogout() {
+  currentUser = null;
+  localStorage.removeItem('ff_saved_credential');
+  document.getElementById('auth-modal').style.display = 'flex';
+  document.getElementById('screen-waiting').style.display = 'none';
+  document.getElementById('screen-dashboard').style.display = 'none';
+}
+
+// Super Admin Management Panel Actions
+function openSuperAdminPanel() {
+  document.getElementById('admin-mgmt-modal').style.display = 'flex';
+}
+function closeSuperAdminPanel() {
+  document.getElementById('admin-mgmt-modal').style.display = 'none';
+}
+
+function renderSuperAdminTable() {
+  const tbody = document.getElementById('admin-users-table-body');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (usersList.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--muted);">No registration requests found.</td></tr>`;
+    return;
+  }
+
+  usersList.forEach(u => {
+    const tr = document.createElement('tr');
+    let statusBadge = `<span class="badge badge-pending">Pending Approval</span>`;
+    if (u.status === 'Approved') statusBadge = `<span class="badge badge-approved">Approved</span>`;
+    if (u.status === 'Blocked') statusBadge = `<span class="badge badge-blocked">Blocked</span>`;
+
+    tr.innerHTML = `
+      <td><b>${u.name}</b><br><small style="color:var(--muted);">Pass: ${u.password}</small></td>
+      <td>${u.designation}</td>
+      <td>${u.phone}</td>
+      <td>${u.dob || '-'}</td>
+      <td>${statusBadge}</td>
+      <td>
+        ${u.status !== 'Approved' ? `<button class="btn-action btn-approve" onclick="updateUserStatus('${u.id}', 'Approved')">Approve</button>` : ''}
+        ${u.status !== 'Blocked' ? `<button class="btn-action btn-block" onclick="updateUserStatus('${u.id}', 'Blocked')">Block / Throw Out</button>` : `<button class="btn-action btn-approve" onclick="updateUserStatus('${u.id}', 'Approved')">Restore</button>`}
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateUserStatus(id, newStatus) {
+  db.ref('fauji_users/' + id).update({ status: newStatus }).then(() => {
+    alert(`User access status updated to: ${newStatus}`);
+  });
+}
+</script>
+
+</body>
+</html>
